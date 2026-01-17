@@ -16,7 +16,7 @@ st.set_page_config(
 
 # Initialize Client (Replace with your actual key or use st.secrets)
 # st.secrets["GROQ_API_KEY"] is safer for production
-client = Groq(api_key="YOUR_GROQ_API_KEY") 
+client = Groq(api_key=st.secrets["GROQ_API_KEY"]) 
 
 # ==========================================
 # 2. EXTREME UI INJECTION (Tailwind + CSS)
