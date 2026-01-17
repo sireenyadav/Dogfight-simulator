@@ -261,7 +261,8 @@ else:
             st.plotly_chart(fig_r)
 
 # ==========================================
-# 6. UNIVERSAL AI CHATBOT
+# ==========================================
+# 6. UNIVERSAL AI CHATBOT (FIXED)
 # ==========================================
 st.markdown("---")
 st.markdown("### 📡 ENGINEERING ASSISTANT")
@@ -269,24 +270,36 @@ st.markdown("### 📡 ENGINEERING ASSISTANT")
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
+# Display history
 for msg in st.session_state.messages:
     st.chat_message(msg["role"]).write(msg["content"])
 
+# Handle new input
 if prompt := st.chat_input("Ask about the physics..."):
     st.session_state.messages.append({"role": "user", "content": prompt})
     st.chat_message("user").write(prompt)
     
     context = "USER IS IN ROCKET MODE" if mode == "🚀 ORBITAL MECHANICS" else "USER IS IN COMBAT MODE"
     
+    # 1. Create the stream
+    stream = client.chat.completions.create(
+        model="llama-3.3-70b-versatile",
+        messages=[
+            {"role": "system", "content": f"You are a Physics Expert. Context: {context}. Keep it brief and technical."},
+            {"role": "user", "content": prompt}
+        ],
+        stream=True
+    )
+    
+    # 2. HELPER FUNCTION TO UNPACK GROQ CHUNKS
+    def parse_groq_stream(stream):
+        for chunk in stream:
+            if chunk.choices[0].delta.content is not None:
+                yield chunk.choices[0].delta.content
+
+    # 3. Write the clean text
     with st.chat_message("assistant"):
-        stream = client.chat.completions.create(
-            model="llama-3.3-70b-versatile",
-            messages=[
-                {"role": "system", "content": f"You are a Physics Expert. Context: {context}. Keep it brief and technical."},
-                {"role": "user", "content": prompt}
-            ],
-            stream=True
-        )
-        response = st.write_stream(stream)
+        response = st.write_stream(parse_groq_stream(stream))
+    
     st.session_state.messages.append({"role": "assistant", "content": response})
-        
+    
